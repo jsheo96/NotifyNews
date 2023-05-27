@@ -9,7 +9,7 @@ config.json 파일을 수정하여 사용할 것
 git clone git@github.com/jsheo96/NotifyNews.git
 cd NotifyNews
 conda create -y -n notify-news
-conda activate notifynews
+conda activate notify-news
 pip install -r requirements.txt
 ```
 config.json 파일을 원하는 대로 수정
