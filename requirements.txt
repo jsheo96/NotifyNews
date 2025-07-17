@@ -1,0 +1,8 @@
+# Core dependencies
+requests>=2.25.0
+httplib2>=0.20.0
+
+# Testing dependencies
+pytest>=6.0.0
+pytest-mock>=3.0.0
+pytest-cov>=2.10.0
