@@ -1,3 +1,23 @@
 .idea/
 __pycache__/
 secret.json
+
+# Test coverage files
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
