@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotifyNews Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .section h2 {
+            color: #555;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .config-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .config-form input, .config-form button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .config-form button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .config-form button:hover {
+            background-color: #0056b3;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+        .news-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .news-title {
+            font-weight: bold;
+            color: #333;
+        }
+        .news-link {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .news-link:hover {
+            text-decoration: underline;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NotifyNews Dashboard</h1>
+        
+        <!-- Configuration Section -->
+        <div class="section">
+            <h2>Configuration</h2>
+            <div class="config-form">
+                <label for="query">Search Query:</label>
+                <input type="text" id="query" value="{{ config.query }}" placeholder="Enter search query">
+                <label for="max_news">Max News:</label>
+                <input type="number" id="max_news" value="{{ config.max_news }}" min="1" max="10">
+                <button onclick="updateConfig()">Update Config</button>
+            </div>
+        </div>
+        
+        <!-- Actions Section -->
+        <div class="section">
+            <h2>Actions</h2>
+            <button class="btn" onclick="fetchAndSend()">Fetch & Send News</button>
+            <button class="btn" onclick="loadNews()">Load Current News</button>
+            <button class="btn" onclick="loadHistory()">Load History</button>
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="status" class="hidden"></div>
+        
+        <!-- Current News Section -->
+        <div class="section">
+            <h2>Current News</h2>
+            <div id="news-container">
+                <div class="loading">Click "Load Current News" to see news items</div>
+            </div>
+        </div>
+        
+        <!-- History Section -->
+        <div class="section">
+            <h2>History</h2>
+            <div id="history-container">
+                <div class="loading">Click "Load History" to see previous links</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function updateConfig() {
+            const query = document.getElementById('query').value;
+            const maxNews = parseInt(document.getElementById('max_news').value);
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    max_news: maxNews
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Configuration updated successfully');
+                } else {
+                    showStatus('Error updating configuration: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Error: ' + error, 'error');
+            });
+        }
+
+        function fetchAndSend() {
+            fetch('/api/fetch-and-send', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(data.message);
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Error: ' + error, 'error');
+            });
+        }
+
+        function loadNews() {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '<div class="loading">Loading news...</div>';
+            
+            fetch('/api/news')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    container.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                    return;
+                }
+                
+                if (data.news.length === 0) {
+                    container.innerHTML = '<div class="loading">No new news items found</div>';
+                    return;
+                }
+                
+                let html = `<p><strong>Total items: ${data.total_items}, New items: ${data.new_items}</strong></p>`;
+                data.news.forEach(item => {
+                    html += `
+                        <div class="news-item">
+                            <div class="news-title">${item.title}</div>
+                            <a href="${item.link}" class="news-link" target="_blank">${item.link}</a>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="status error">Error loading news: ${error}</div>`;
+            });
+        }
+
+        function loadHistory() {
+            const container = document.getElementById('history-container');
+            container.innerHTML = '<div class="loading">Loading history...</div>';
+            
+            fetch('/api/history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.links.length === 0) {
+                    container.innerHTML = '<div class="loading">No history found</div>';
+                    return;
+                }
+                
+                let html = `<p><strong>Total links: ${data.total_links} (showing last 20)</strong></p>`;
+                data.links.forEach(link => {
+                    html += `
+                        <div class="news-item">
+                            <a href="${link}" class="news-link" target="_blank">${link}</a>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="status error">Error loading history: ${error}</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
